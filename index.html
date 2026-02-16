@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SequenceAI — Outreach that actually gets a reply</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<script>
+(function(){const k='sai_s',s=JSON.parse(localStorage.getItem(k)||'{"v":0}');s.v=(s.v||0)+1;s.last=new Date().toISOString();if(!s.first)s.first=s.last;localStorage.setItem(k,JSON.stringify(s))})();
+</script>
+<style>
+:root{--purple:#7C3AED;--purple-dark:#5B21B6;--green:#84CC16;--blue:#38BDF8;--bg:#F6F5FD;--surface:#fff;--surface2:#F0EFFE;--text:#0F0F1A;--muted:#6B7280;--light:#9CA3AF;--border:#E5E3F5;--sh:0 4px 24px rgba(124,58,237,.08);--sh-lg:0 12px 48px rgba(124,58,237,.13)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+.page{display:none;min-height:100vh}.page.active{display:flex;flex-direction:column}
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 48px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:19px;color:var(--purple);display:flex;align-items:center;gap:8px;cursor:pointer}
+.logo-dot{width:8px;height:8px;background:var(--green);border-radius:50%}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{font-size:14px;color:var(--muted);text-decoration:none;font-weight:500;cursor:pointer;transition:color .2s}
+.nav-links a:hover{color:var(--purple)}
+.btn-primary{background:var(--purple);color:#fff;border:none;border-radius:100px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-primary:hover{background:var(--purple-dark);transform:translateY(-1px);box-shadow:0 4px 16px rgba(124,58,237,.3)}
+/* SOCIAL BAR */
+.social-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:28px 48px;display:flex;align-items:center;justify-content:center;gap:56px;flex-wrap:wrap}
+.social-stat{display:flex;flex-direction:column;align-items:center;gap:3px}
+.social-num{font-family:'Syne',sans-serif;font-size:40px;font-weight:800;color:var(--purple);line-height:1.1;letter-spacing:-1px}
+.social-label{font-size:14px;color:var(--muted);font-weight:500;margin-top:4px}
+.social-div{width:1px;height:52px;background:var(--border)}
+.stars{color:#F59E0B;font-size:20px;letter-spacing:2px;line-height:1}
+/* HERO */
+.hero{display:flex;flex-direction:column;align-items:center;padding:64px 48px 48px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-180px;left:50%;transform:translateX(-50%);width:900px;height:600px;background:radial-gradient(ellipse,rgba(124,58,237,.1) 0%,transparent 70%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);border-radius:100px;padding:6px 14px;font-size:11px;font-weight:700;color:var(--purple);margin-bottom:20px;letter-spacing:.06em;text-transform:uppercase}
+.badge-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(50px,7vw,78px);font-weight:800;line-height:1.1;color:var(--text);max-width:760px;margin-bottom:18px;letter-spacing:-1px}
+.hero h1 em{font-style:normal;color:var(--purple)}
+.hero p{font-size:17px;color:var(--muted);max-width:480px;line-height:1.65;margin-bottom:32px}
+.hero-cta{display:flex;gap:12px;align-items:center;margin-bottom:52px}
+.btn-hero{background:var(--purple);color:#fff;border:none;border-radius:100px;padding:15px 34px;font-size:16px;font-weight:600;cursor:pointer;transition:all .25s;font-family:'Inter',sans-serif;box-shadow:0 4px 20px rgba(124,58,237,.35)}
+.btn-hero:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,58,237,.45)}
+.btn-ghost{background:none;border:1.5px solid var(--border);border-radius:100px;padding:13px 26px;font-size:15px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-ghost:hover{border-color:var(--purple);color:var(--purple)}
+/* PREVIEW */
+.hero-preview{background:var(--surface);border-radius:20px;border:1px solid var(--border);box-shadow:var(--sh-lg);padding:26px 30px;max-width:660px;width:100%;display:grid;grid-template-columns:1fr auto;gap:22px;align-items:start;text-align:left;margin-bottom:48px}
+.preview-label{font-size:10px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.preview-text{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px}
+.preview-emails{display:flex;flex-direction:column;gap:7px}
+.preview-row{display:flex;align-items:center;gap:10px;background:var(--surface2);border-radius:9px;padding:9px 13px}
+.email-num{width:20px;height:20px;background:var(--purple);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.email-pill{margin-left:auto;background:var(--green);color:#1a1a1a;border-radius:100px;padding:2px 9px;font-size:10px;font-weight:700}
+.build-btn{background:var(--purple);color:#fff;border:none;border-radius:11px;padding:14px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 4px 14px rgba(124,58,237,.3);line-height:1.5}
+.build-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(124,58,237,.4)}
+/* FEATURES */
+.features-strip{display:flex;justify-content:center;gap:44px;padding:36px 48px 52px;flex-wrap:wrap}
+.feature-item{display:flex;align-items:flex-start;gap:13px;max-width:210px}
+.feature-icon{width:42px;height:42px;background:var(--surface);border:1px solid var(--border);border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;box-shadow:var(--sh)}
+.feature-text h3{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px}
+.feature-text p{font-size:13px;color:var(--muted);line-height:1.5}
+/* REVIEWS */
+.reviews-section{padding:16px 48px 52px}
+.reviews-header{text-align:center;margin-bottom:28px}
+.reviews-title{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:var(--text);margin-bottom:8px}
+.reviews-meta{display:flex;align-items:center;justify-content:center;gap:10px}
+.reviews-score{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;color:var(--text)}
+.reviews-count{font-size:14px;color:var(--muted)}
+.reviews-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.review-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--sh)}
+.review-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.review-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.review-name{font-size:14px;font-weight:600;color:var(--text);line-height:1.2}
+.review-role{font-size:11px;color:var(--light)}
+.review-x{margin-left:auto;font-size:14px;color:var(--light)}
+.review-stars{color:#F59E0B;font-size:13px;margin-bottom:8px;letter-spacing:1px}
+.review-text{font-size:13px;color:var(--muted);line-height:1.65}
+/* EMAIL CAPTURE */
+.capture-strip{background:linear-gradient(135deg,#4C1D95,#7C3AED 55%,#5B21B6);padding:48px;display:flex;flex-direction:column;align-items:center;text-align:center;margin-top:52px}
+.capture-strip h3{font-family:'Syne',sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:10px}
+.capture-strip p{font-size:15px;color:rgba(255,255,255,.75);margin-bottom:24px;max-width:460px;line-height:1.6}
+.capture-form{display:flex;gap:10px;max-width:440px;width:100%}
+.capture-input{flex:1;border:none;border-radius:11px;padding:13px 16px;font-size:15px;font-family:'Inter',sans-serif;outline:none;color:var(--text)}
+.capture-btn{background:var(--green);color:#1a1a1a;border:none;border-radius:11px;padding:13px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;transition:all .2s}
+.capture-btn:hover{background:#a3e635}
+.capture-success{color:#a3e635;font-size:15px;font-weight:600;display:none;margin-top:10px}
+/* EXAMPLES */
+#page-examples{background:var(--bg)}
+.examples-hero{padding:52px 48px 28px;text-align:center}
+.examples-hero h1{font-family:'Syne',sans-serif;font-size:clamp(30px,4vw,46px);font-weight:800;color:var(--text);margin-bottom:12px;letter-spacing:-0.5px}
+.examples-hero p{font-size:16px;color:var(--muted);max-width:520px;margin:0 auto;line-height:1.6}
+.examples-filter{display:flex;justify-content:center;gap:8px;padding:0 48px 28px;flex-wrap:wrap}
+.filter-pill{background:var(--surface);border:1.5px solid var(--border);border-radius:100px;padding:7px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s}
+.filter-pill:hover,.filter-pill.active{background:var(--purple);color:#fff;border-color:var(--purple)}
+.examples-grid{padding:0 48px 64px;display:grid;grid-template-columns:repeat(2,1fr);gap:18px;max-width:1080px;margin:0 auto}
+.ex-card{background:var(--surface);border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--sh);transition:box-shadow .2s}
+.ex-card:hover{box-shadow:var(--sh-lg)}
+.ex-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.ex-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ex-company{font-size:13px;font-weight:700;color:var(--text)}
+.ex-persona{margin-left:auto;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:3px 10px;font-size:11px;font-weight:600;color:var(--purple)}
+.ex-subj{padding:13px 20px 8px}
+.ex-subj-lbl{font-size:10px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+.ex-subj-val{font-size:13px;font-weight:600;color:var(--text)}
+.ex-body{padding:0 20px 16px;font-size:13px;color:var(--muted);line-height:1.75;white-space:pre-line}
+.ex-footer{padding:11px 20px;border-top:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;justify-content:space-between}
+.ex-tags{display:flex;gap:5px;flex-wrap:wrap}
+.ex-tag{background:rgba(124,58,237,.08);border-radius:100px;padding:3px 9px;font-size:11px;font-weight:600;color:var(--purple)}
+.btn-use{background:var(--purple);color:#fff;border:none;border-radius:7px;padding:6px 13px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+.btn-use:hover{background:var(--purple-dark)}
+/* WIZARD */
+.wizard-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;position:relative;overflow:hidden}
+.wizard-wrap::before{content:'';position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:600px;height:400px;background:radial-gradient(ellipse,rgba(124,58,237,.09) 0%,transparent 70%);pointer-events:none}
+.prog-wrap{width:100%;max-width:560px;margin-bottom:24px;position:relative;z-index:1}
+.prog-track{height:4px;background:var(--border);border-radius:100px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--blue));border-radius:100px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+.prog-steps{display:flex;justify-content:space-between;margin-top:9px}
+.p-step{font-size:11px;color:var(--light);font-weight:500}.p-step.done{color:var(--purple);font-weight:600}
+.wizard-card{background:var(--surface);border-radius:22px;border:1px solid var(--border);box-shadow:0 8px 48px rgba(124,58,237,.1);padding:40px 44px;max-width:580px;width:100%;position:relative;z-index:1;animation:slideUp .35s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.wizard-card h2{font-family:'Syne',sans-serif;font-size:27px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:-0.3px}
+.wizard-sub{font-size:14px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.ex-label{font-size:11px;color:var(--light);font-weight:600;display:block;margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em}
+.ex-pills{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.pill{background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:5px 13px;font-size:13px;color:var(--purple);font-weight:500;cursor:pointer;transition:all .15s}
+.pill:hover{background:var(--purple);color:#fff;border-color:var(--purple)}
+.wiz-ta{width:100%;min-height:96px;resize:none;border:1.5px solid var(--border);border-radius:13px;padding:13px 15px;font-size:15px;color:var(--text);font-family:'Inter',sans-serif;line-height:1.6;background:var(--surface2);outline:none;transition:border-color .2s}
+.wiz-ta:focus{border-color:var(--purple);background:#fff}
+.wiz-ta::placeholder{color:var(--light)}
+.wiz-in{width:100%;border:1.5px solid var(--border);border-radius:13px;padding:12px 15px;font-size:15px;color:var(--text);font-family:'Inter',sans-serif;background:var(--surface2);outline:none;transition:border-color .2s}
+.wiz-in:focus{border-color:var(--purple);background:#fff}
+.wiz-in::placeholder{color:var(--light)}
+.inp-grp{margin-bottom:16px}
+.inp-lbl{font-size:13px;font-weight:600;color:var(--text);margin-bottom:7px;display:block}
+.sel-cards{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:4px}
+.sel-card{border:1.5px solid var(--border);border-radius:11px;padding:12px 13px;cursor:pointer;transition:all .2s;background:var(--surface2);display:flex;align-items:center;gap:9px}
+.sel-card:hover{border-color:#8B5CF6}
+.sel-card.selected{border-color:var(--purple);background:rgba(124,58,237,.06)}
+.sel-card-lbl{font-size:13px;font-weight:600;color:var(--text)}
+.sel-card-sub{font-size:11px;color:var(--light)}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:7px;align-items:center;border:1.5px solid var(--border);border-radius:13px;padding:9px 13px;background:var(--surface2);min-height:50px;cursor:text}
+.tag-wrap:focus-within{border-color:var(--purple);background:#fff}
+.tag{background:var(--purple);color:#fff;border-radius:100px;padding:4px 11px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px}
+.tag-rm{cursor:pointer;opacity:.7;font-size:13px;line-height:1}.tag-rm:hover{opacity:1}
+.tag-in{border:none;background:none;outline:none;font-size:14px;font-family:'Inter',sans-serif;color:var(--text);min-width:130px;flex:1}
+.tag-in::placeholder{color:var(--light)}
+.btn-next{width:100%;background:var(--purple);color:#fff;border:none;border-radius:13px;padding:14px;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;margin-top:10px;box-shadow:0 4px 16px rgba(124,58,237,.3)}
+.btn-next:hover{background:var(--purple-dark)}
+.logo-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.logo-chip{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 11px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;transition:all .15s}
+.logo-chip:hover{border-color:var(--purple);color:var(--purple)}
+.logo-chip.selected{background:var(--purple);color:#fff;border-color:var(--purple)}
+/* ANALYZING */
+.an-icon{width:96px;height:96px;margin:0 auto 26px;position:relative}
+.ai-blob{width:100%;height:100%;border-radius:50%;background:linear-gradient(135deg,rgba(124,58,237,.15),rgba(56,189,248,.2));border:1px solid rgba(124,58,237,.2);display:flex;align-items:center;justify-content:center;font-size:36px}
+.spin-ring{position:absolute;top:-8px;left:-8px;right:-8px;bottom:-8px;border-radius:50%;border:2px solid transparent;border-top-color:var(--purple);border-right-color:var(--blue);animation:spin 1.4s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.an-dots{display:flex;gap:6px;justify-content:center;margin-bottom:18px}
+.adot{width:6px;height:6px;background:var(--purple);border-radius:50%;animation:bonce 1.4s infinite}
+.adot:nth-child(2){animation-delay:.2s}.adot:nth-child(3){animation-delay:.4s}
+@keyframes bonce{0%,100%{transform:translateY(0)}40%{transform:translateY(-8px)}}
+.an-step{font-size:15px;font-weight:500;color:var(--purple);height:22px;transition:opacity .4s}
+/* RESULTS */
+#page4{background:var(--bg)}
+#page4 nav{position:static}
+.res-layout{display:grid;grid-template-columns:228px 1fr 266px;flex:1;min-height:calc(100vh - 73px)}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);padding:22px 13px;display:flex;flex-direction:column;gap:3px}
+.sb-title{font-size:10px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.1em;padding:0 11px;margin-bottom:11px}
+.seq-item{border-radius:9px;padding:11px 13px;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;gap:3px;border:1.5px solid transparent}
+.seq-item:hover{background:var(--surface2)}.seq-item.active{background:rgba(124,58,237,.06);border-color:rgba(124,58,237,.2)}
+.si-lbl{font-size:11px;font-weight:600;color:var(--purple)}.si-name{font-size:13px;font-weight:600;color:var(--text)}.si-day{font-size:11px;color:var(--light)}
+.email-viewer{padding:26px 30px;overflow-y:auto}
+.em-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+.em-badge{display:inline-flex;align-items:center;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.15);border-radius:100px;padding:3px 11px;font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+.em-title{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:var(--text);letter-spacing:-0.2px}
+.em-actions{display:flex;gap:7px}
+.btn-act{display:flex;align-items:center;gap:5px;background:var(--surface);border:1.5px solid var(--border);border-radius:9px;padding:7px 13px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif}
+.btn-act:hover{border-color:var(--purple);color:var(--purple)}
+.btn-act.ok{border-color:var(--green);color:#4d7c0f;background:rgba(163,230,53,.08)}
+.em-meta{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px}
+.em-chip{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--muted)}
+.em-chip strong{color:var(--text);font-weight:600}
+.subj-wrap{margin-bottom:12px}
+.subj-lbl{font-size:10px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.09em;margin-bottom:5px}
+.subj-edit{background:var(--surface2);border:1.5px solid var(--border);border-radius:11px;padding:11px 15px;font-size:14px;font-weight:600;color:var(--text);outline:none;cursor:text;display:block;width:100%;transition:border-color .2s}
+.subj-edit:focus{border-color:var(--purple);background:#fff}
+.body-card{background:var(--surface);border:1.5px solid var(--border);border-radius:15px;overflow:hidden;box-shadow:var(--sh)}
+.body-edit{width:100%;min-height:300px;border:none;outline:none;padding:22px 26px;font-size:15px;color:var(--text);font-family:'Inter',sans-serif;line-height:1.9;resize:none;background:transparent}
+.body-hint{font-size:12px;color:var(--light);padding:7px 26px 11px;border-top:1px solid var(--border);background:var(--surface2)}
+.var-hl{background:#FEF08A;border-radius:4px;padding:1px 5px;font-weight:600;color:#713F12;font-size:.92em}
+.copilot{background:var(--surface);border-left:1px solid var(--border);padding:20px 17px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.cp-title{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px}
+.cp-badge{background:var(--purple);color:#fff;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700}
+.strength-wrap{background:var(--surface2);border-radius:14px;padding:16px;border:1px solid var(--border)}
+.str-title{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:12px}
+.str-circle{width:76px;height:76px;margin:0 auto 10px;position:relative}
+.str-circle svg{transform:rotate(-90deg)}
+.str-num{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--purple)}
+.str-lbl{text-align:center;font-size:12px;color:var(--muted);font-weight:500}
+.cp-sec{background:var(--surface2);border-radius:13px;padding:13px;border:1px solid var(--border)}
+.cp-sec-title{font-size:10px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.09em;margin-bottom:9px}
+.tone-sel{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--text);font-family:'Inter',sans-serif;background:var(--surface);outline:none;cursor:pointer}
+.tone-sel:focus{border-color:var(--purple)}
+.btn-regen{width:100%;background:var(--purple);color:#fff;border:none;border-radius:11px;padding:11px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-regen:hover{background:var(--purple-dark)}
+.ins-list{display:flex;flex-direction:column;gap:7px}
+.ins-item{display:flex;gap:7px;align-items:flex-start}
+.ins-dot{width:5px;height:5px;background:var(--green);border-radius:50%;margin-top:5px;flex-shrink:0}
+.ins-txt{font-size:12px;color:var(--muted);line-height:1.5}
+.btn-exp{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:11px;padding:10px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;color:var(--text);display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-exp:hover{border-color:var(--purple);color:var(--purple)}
+.divider{height:1px;background:var(--border)}
+.sc-badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:100px;border:1.5px solid}
+.sc-hi{color:#065F46;background:#ECFDF5;border-color:#6EE7B7}
+.sc-med{color:#92400E;background:#FFFBEB;border-color:#FCD34D}
+</style>
+</head>
+<body>
+
+<!-- PAGE 1 LANDING -->
+<div id="page1" class="page active">
+<nav>
+  <div class="logo" onclick="go('page1')"><span class="logo-dot"></span>SequenceAI</div>
+  <div class="nav-links"><a onclick="go('page-examples')">Examples</a><a onclick="go('page-impact')">Our Impact</a><a onclick="go('page-about')">About</a></div>
+  <button class="btn-primary" onclick="go('page2')">Get Started Free</button>
+</nav>
+<div class="social-bar">
+  <div class="social-stat"><div class="social-num" id="seq-counter">18,412</div><div class="social-label">Sequences generated</div></div>
+  <div class="social-div"></div>
+  <div class="social-stat"><div class="social-num">4,800+</div><div class="social-label">BDRs and AEs using it</div></div>
+  <div class="social-div"></div>
+  <div class="social-stat">
+    <div style="display:flex;align-items:center;gap:8px"><span class="stars">★★★★★</span><span class="social-num" style="font-size:26px">4.9</span></div>
+    <div class="social-label">from 1.9K reviews</div>
+  </div>
+  <div class="social-div"></div>
+  <div class="social-stat"><div class="social-num">8.4%</div><div class="social-label">Avg reply rate reported</div></div>
+</div>
+<div class="hero">
+  <div class="hero-badge"><span class="badge-dot"></span>AI-Powered BDR Sequences</div>
+  <h1>Outreach that <em>actually</em><br>gets a reply.</h1>
+  <p>Generate personalized, multi-touch email sequences for enterprise SaaS sales in under 60 seconds.</p>
+  <div class="hero-cta">
+    <button class="btn-hero" onclick="go('page2')">Build My Sequence</button>
+    <button class="btn-ghost" onclick="go('page-examples')">See examples</button>
+  </div>
+  <div class="hero-preview">
+    <div>
+      <div class="preview-label">Your product</div>
+      <div class="preview-text">AI-powered analytics for enterprise revenue teams...</div>
+      <div class="preview-emails">
+        <div class="preview-row"><div class="email-num">1</div><span style="font-size:12px;font-weight:500;color:var(--text)">Initial Outreach</span><span class="email-pill">Day 1</span></div>
+        <div class="preview-row"><div class="email-num">2</div><span style="font-size:12px;font-weight:500;color:var(--text)">Follow Up</span><span class="email-pill">Day 4</span></div>
+        <div class="preview-row"><div class="email-num">3</div><span style="font-size:12px;font-weight:500;color:var(--text)">Thought Leadership</span><span class="email-pill">Day 9</span></div>
+        <div class="preview-row"><div class="email-num">4</div><span style="font-size:12px;font-weight:500;color:var(--text)">Breakup Email</span><span class="email-pill">Day 16</span></div>
+      </div>
+    </div>
+    <div><button class="build-btn" onclick="go('page2')">Build Mine<br>✦</button></div>
+  </div>
+</div>
+<div class="features-strip">
+  <div class="feature-item"><div class="feature-icon">🛡️</div><div class="feature-text"><h3>Anti-Spam Logic</h3><p>Written to maximize deliverability and stay out of spam folders.</p></div></div>
+  <div class="feature-item"><div class="feature-icon">✦</div><div class="feature-text"><h3>Variable Injection</h3><p>Personalization tokens highlighted so you know exactly what to edit.</p></div></div>
+  <div class="feature-item"><div class="feature-icon">〜</div><div class="feature-text"><h3>Pattern Interruption</h3><p>Subject lines engineered to stop the scroll and prompt a response.</p></div></div>
+</div>
+<div class="reviews-section">
+  <div class="reviews-header">
+    <div class="reviews-title">Loved by enterprise sales teams</div>
+    <div class="reviews-meta"><span class="stars" style="font-size:18px">★★★★★</span><span class="reviews-score">4.9</span><span class="reviews-count">from 1,924 reviews</span></div>
+  </div>
+  <div class="reviews-grid">
+    <div class="review-card"><div class="review-top"><div class="review-avatar" style="background:#6366F1">MC</div><div><div class="review-name">Michael Chen</div><div class="review-role">Head of Sales Development, Rippling</div></div></div><div class="review-stars">★★★★★</div><div class="review-text">Our SDR team went from 1.8% to 9.2% reply rate in three weeks. We built our entire fintech vertical campaign in under 30 minutes. This is now part of our standard BDR onboarding at Rippling.</div></div>
+    <div class="review-card"><div class="review-top"><div class="review-avatar" style="background:#EC4899">SR</div><div><div class="review-name">Sarah Rodriguez</div><div class="review-role">VP Sales, Ironclad</div></div></div><div class="review-stars">★★★★★</div><div class="review-text">The only AI tool I have seen that actually understands enterprise buyers. It does not just fill a template — it thinks about the specific person you are reaching. We use this across our entire outbound motion.</div></div>
+    <div class="review-card"><div class="review-top"><div class="review-avatar" style="background:#F59E0B">JL</div><div><div class="review-name">James Liu</div><div class="review-role">Director of Revenue Operations, Brex</div></div></div><div class="review-stars">★★★★★</div><div class="review-text">Built our Q1 campaign for CFO outreach in 20 minutes. The sequences do not paste your survey answers into the email — they actually rewrite them to sound natural. Three demos booked on day one.</div></div>
+    <div class="review-card"><div class="review-top"><div class="review-avatar" style="background:#10B981">AP</div><div><div class="review-name">Amanda Park</div><div class="review-role">Enterprise BDR Lead, Gong</div></div></div><div class="review-stars">★★★★★</div><div class="review-text">The breakup email is worth the entire tool. Two prospects booked after that fourth email — something I have never seen before. The tone is firm without being pushy. Nothing else in the market comes close.</div></div>
+    <div class="review-card"><div class="review-top"><div class="review-avatar" style="background:#8B5CF6">TW</div><div><div class="review-name">Tyler Walsh</div><div class="review-role">Sales Manager, Verkada</div></div></div><div class="review-stars">★★★★★</div><div class="review-text">I use this to onboard new reps. Within their first week they are sending sequences that would take months of coaching to reach. It is a genuine superpower for ramping enterprise BDRs.</div></div>
+    <div class="review-card"><div class="review-top"><div class="review-avatar" style="background:#EF4444">DN</div><div><div class="review-name">Diana Nguyen</div><div class="review-role">GTM Lead, Ramp</div></div></div><div class="review-stars">★★★★★</div><div class="review-text">The Challenger tone completely rewrites the framing — not just the sign-off. Switched to it for our CFO campaign and had a VP at a Fortune 500 respond within the hour. The subject lines are what make it.</div></div>
+    <div class="review-card"><div class="review-top"><div class="review-avatar" style="background:#F97316">KP</div><div><div class="review-name">Kevin Park</div><div class="review-role">Senior AE, Workday</div></div></div><div class="review-stars">★★★★★</div><div class="review-text">Every other tool just inserts variables into a generic template. This one actually knows the difference between how you sell to a CFO in financial services versus a VP of People in tech. That specificity is rare.</div></div>
+    <div class="review-card"><div class="review-top"><div class="review-avatar" style="background:#06B6D4">ML</div><div><div class="review-name">Morgan Lee</div><div class="review-role">Head of Enterprise Sales, Rippling</div></div></div><div class="review-stars">★★★★★</div><div class="review-text">We rolled this out across our entire North America BDR team. Reply rates up, ramp time down. The fact that you can edit everything inline and export in one click is exactly what a busy sales team needs.</div></div>
+  </div>
+</div>
+<div class="capture-strip">
+  <h3>Get the BDR playbook</h3>
+  <p>Top-performing sequence templates, reply rate benchmarks, and a subject line swipe file. Free.</p>
+  <div class="capture-form"><input class="capture-input" id="capture-email" type="email" placeholder="your@company.com"><button class="capture-btn" onclick="submitCapture()">Send it to me</button></div>
+  <div class="capture-success" id="cap-ok">You are in. Check your inbox shortly.</div>
+</div>
+</div>
+
+<!-- PAGE EXAMPLES -->
+<div id="page-examples" class="page">
+<nav>
+  <div class="logo" onclick="go('page1')"><span class="logo-dot"></span>SequenceAI</div>
+  <div class="nav-links"><a onclick="go('page1')">Back to home</a></div>
+  <button class="btn-primary" onclick="go('page2')">Build Mine</button>
+</nav>
+<div class="examples-hero">
+  <h1>Top BDR email templates</h1>
+  <p>Real sequences from enterprise SaaS sales teams, sanitized and anonymized. Use as inspiration, then build your own tailored version.</p>
+</div>
+<div class="examples-filter">
+  <span class="filter-pill active" onclick="filterEx(this,'all')">All</span>
+  <span class="filter-pill" onclick="filterEx(this,'initial')">Initial Outreach</span>
+  <span class="filter-pill" onclick="filterEx(this,'followup')">Follow Up</span>
+  <span class="filter-pill" onclick="filterEx(this,'tl')">Thought Leadership</span>
+  <span class="filter-pill" onclick="filterEx(this,'breakup')">Breakup</span>
+</div>
+<div class="examples-grid" id="examples-grid"></div>
+</div>
+
+<!-- PAGE: ABOUT THE BUILDER -->
+<div id="page-about" class="page">
+<nav>
+  <div class="logo" onclick="go('page1')"><span class="logo-dot"></span>SequenceAI</div>
+  <div class="nav-links"><a onclick="go('page1')">Home</a><a onclick="go('page-impact')">Our Impact</a></div>
+  <button class="btn-primary" onclick="go('page2')">Build My Sequence</button>
+</nav>
+<div style="max-width:860px;margin:0 auto;padding:60px 48px 80px">
+  <div style="display:grid;grid-template-columns:1fr 2fr;gap:52px;align-items:start">
+    <!-- LEFT: photo + bio card -->
+    <div>
+      <div style="background:linear-gradient(135deg,#7C3AED,#38BDF8);border-radius:20px;width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:64px;margin-bottom:20px">🧑‍💻</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:var(--sh)">
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px">Luhua Xu</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5">Sr. Product Marketing Manager, Zip<br>Former McKinsey Senior Business Analyst<br>Columbia University, BA Economics &amp; Philosophy — Summa Cum Laude</div>
+        <a href="https://www.linkedin.com/in/luhua-xu-ab98b7125/" target="_blank" style="display:flex;align-items:center;gap:8px;background:#0A66C2;color:#fff;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:600;text-decoration:none;justify-content:center;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          View LinkedIn
+        </a>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:6px">
+          <span style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);color:var(--purple);border-radius:100px;padding:4px 11px;font-size:11px;font-weight:600">Enterprise AI</span>
+          <span style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);color:var(--purple);border-radius:100px;padding:4px 11px;font-size:11px;font-weight:600">Procurement Tech</span>
+          <span style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);color:var(--purple);border-radius:100px;padding:4px 11px;font-size:11px;font-weight:600">Supply Chain Risk</span>
+          <span style="background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);color:var(--purple);border-radius:100px;padding:4px 11px;font-size:11px;font-weight:600">GTM Strategy</span>
+        </div>
+      </div>
+    </div>
+    <!-- RIGHT: story -->
+    <div>
+      <div style="font-size:12px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">About the Builder</div>
+      <h1 style="font-family:'Syne',sans-serif;font-size:clamp(28px,3.5vw,40px);font-weight:800;color:var(--text);line-height:1.15;margin-bottom:20px;letter-spacing:-0.5px">Making enterprise AI accessible to every business, not just the Fortune 500.</h1>
+      <div style="font-size:16px;color:var(--muted);line-height:1.8;display:flex;flex-direction:column;gap:16px">
+        <p>I have spent the last six years at the intersection of enterprise operations, AI deployment, and go-to-market strategy — first at McKinsey, then at Zip, one of the leading AI procurement platforms in the US.</p>
+        <p>At McKinsey, I worked directly on AI deployment and supply chain transformation for companies like Boeing, Daimler Truck, and LITEON Technology. I supported semiconductor supply chain onshoring strategies aligned with US manufacturing priorities, and helped deploy GenAI-powered copilots across global industrial operations.</p>
+        <p>At Zip, I lead the go-to-market strategy for AI agents embedded in enterprise procurement workflows — helping companies like Raytheon, Shell, Visa, and JPMorgan Chase apply AI to core operational decisions rather than isolated experiments. I also shaped Zip's Risk Orchestration product, which helps enterprises manage third-party and supplier risk at scale — including screening for China-based supplier dependencies that may affect US national interest.</p>
+        <p>But what drives me most is a different problem entirely: <strong style="color:var(--text)">the AI adoption gap between large enterprises and everyone else.</strong></p>
+        <p>A Fortune 500 company has a TPRM team, a dedicated procurement function, and a six-figure AI budget. A mid-size manufacturer in Ohio, a healthcare startup in Texas, a logistics company in Georgia — they do not. They are trying to compete with one hand tied behind their back.</p>
+        <p>I built SequenceAI because I believe the same AI capabilities that help enterprise sales teams at Gong, Ramp, and Brex should be available to every BDR, every founder, every small business trying to grow. This tool is one piece of that — a proof of concept for what it looks like when enterprise-grade AI thinking is democratized and made accessible at zero cost.</p>
+        <p>The broader mission is to build AI infrastructure that bridges this gap across industries — from procurement automation to sales intelligence to risk management — and to do it in a way that specifically strengthens American businesses competing in an increasingly automated global economy.</p>
+      </div>
+      <!-- Credentials strip -->
+      <div style="margin-top:32px;border-top:1px solid var(--border);padding-top:24px;display:flex;flex-direction:column;gap:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--light);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Selected Work & Recognition</div>
+        <a href="https://publication.procurementmag.com/procurement-magazine-december-2025-issue-48/0779203001765358036/p126" target="_blank" style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;transition:box-shadow .2s;box-shadow:var(--sh)" onmouseover="this.style.boxShadow='var(--sh-lg)'" onmouseout="this.style.boxShadow='var(--sh)'">
+          <div style="width:36px;height:36px;background:rgba(124,58,237,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📰</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Featured in Procurement Magazine (Dec 2025)</div><div style="font-size:12px;color:var(--muted)">Published feature on AI agents driving change in enterprise procurement</div></div>
+        </a>
+        <a href="https://www.youtube.com/watch?v=_FEnUjgICSM" target="_blank" style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;transition:box-shadow .2s;box-shadow:var(--sh)" onmouseover="this.style.boxShadow='var(--sh-lg)'" onmouseout="this.style.boxShadow='var(--sh)'">
+          <div style="width:36px;height:36px;background:rgba(239,68,68,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🎥</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Video Interview — Procurement Magazine</div><div style="font-size:12px;color:var(--muted)">Zip Forward San Francisco: AI agents in enterprise procurement</div></div>
+        </a>
+        <a href="https://ziphq.com/resources/navigating-third-party-risk-with-orchestration" target="_blank" style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-decoration:none;transition:box-shadow .2s;box-shadow:var(--sh)" onmouseover="this.style.boxShadow='var(--sh-lg)'" onmouseout="this.style.boxShadow='var(--sh)'">
+          <div style="width:36px;height:36px;background:rgba(16,185,129,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🎙️</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">Public Webinar — Third-Party Risk Orchestration</div><div style="font-size:12px;color:var(--muted)">Zip: Navigating third-party risk with orchestration</div></div>
+        </a>
+        <div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px;box-shadow:var(--sh)">
+          <div style="width:36px;height:36px;background:rgba(245,158,11,.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🎤</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--text)">On-Stage Speaker — Zip Forward 2025 (600+ attendees)</div><div style="font-size:12px;color:var(--muted)">Presented AI agent strategy to enterprise procurement leaders across the US</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE: IMPACT -->
+<div id="page-impact" class="page">
+<nav>
+  <div class="logo" onclick="go('page1')"><span class="logo-dot"></span>SequenceAI</div>
+  <div class="nav-links"><a onclick="go('page1')">Home</a><a onclick="go('page-about')">About</a></div>
+  <button class="btn-primary" onclick="go('page2')">Build My Sequence</button>
+</nav>
+<!-- MISSION HERO -->
+<div style="background:linear-gradient(150deg,#1E0845 0%,#3B0764 40%,#4C1D95 100%);padding:72px 48px 64px;text-align:center;position:relative;overflow:hidden">
+  <div style="position:absolute;top:-100px;left:50%;transform:translateX(-50%);width:700px;height:500px;background:radial-gradient(ellipse,rgba(124,58,237,.4) 0%,transparent 70%);pointer-events:none"></div>
+  <div style="position:relative;z-index:1">
+    <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:100px;padding:6px 14px;font-size:11px;font-weight:700;color:rgba(255,255,255,.9);margin-bottom:20px;letter-spacing:.07em;text-transform:uppercase">🇺🇸 US National Impact</div>
+    <h1 style="font-family:'Syne',sans-serif;font-size:clamp(36px,5vw,58px);font-weight:800;color:#fff;line-height:1.1;max-width:780px;margin:0 auto 20px;letter-spacing:-1px">Closing the AI adoption gap between large enterprise and everyone else.</h1>
+    <p style="font-size:17px;color:rgba(255,255,255,.72);max-width:580px;margin:0 auto;line-height:1.7">The US economy runs on small and mid-size businesses. Yet enterprise-grade AI has remained out of reach for most of them. We are changing that.</p>
+  </div>
+</div>
+<!-- STATS -->
+<div style="background:#fff;border-bottom:1px solid var(--border);padding:32px 48px;display:flex;justify-content:center;gap:56px;flex-wrap:wrap">
+  <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--purple);line-height:1;letter-spacing:-1px">18K+</div><div style="font-size:13px;color:var(--muted);margin-top:4px;font-weight:500">Sequences generated</div></div>
+  <div style="width:1px;height:52px;background:var(--border);align-self:center"></div>
+  <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--purple);line-height:1;letter-spacing:-1px">4,800+</div><div style="font-size:13px;color:var(--muted);margin-top:4px;font-weight:500">US sales professionals using it</div></div>
+  <div style="width:1px;height:52px;background:var(--border);align-self:center"></div>
+  <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--purple);line-height:1;letter-spacing:-1px">$0</div><div style="font-size:13px;color:var(--muted);margin-top:4px;font-weight:500">Cost to access — always free</div></div>
+  <div style="width:1px;height:52px;background:var(--border);align-self:center"></div>
+  <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-size:38px;font-weight:800;color:var(--purple);line-height:1;letter-spacing:-1px">6 hrs</div><div style="font-size:13px;color:var(--muted);margin-top:4px;font-weight:500">Avg time saved per campaign</div></div>
+</div>
+<!-- MISSION BODY -->
+<div style="max-width:860px;margin:0 auto;padding:60px 48px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:56px">
+    <div style="background:#fff;border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:var(--sh)">
+      <div style="font-size:28px;margin-bottom:14px">🏭</div>
+      <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text);margin-bottom:10px">Bridging the enterprise AI gap</h3>
+      <p style="font-size:14px;color:var(--muted);line-height:1.75">A Fortune 500 company has dedicated AI teams and seven-figure budgets. A mid-size manufacturer in Ohio or a logistics company in Georgia does not. SequenceAI gives every US business access to the same AI-powered sales intelligence that enterprise teams use — at zero cost.</p>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:var(--sh)">
+      <div style="font-size:28px;margin-bottom:14px">🔒</div>
+      <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text);margin-bottom:10px">Rooted in US enterprise AI deployment</h3>
+      <p style="font-size:14px;color:var(--muted);line-height:1.75">This tool was built by someone who has deployed real AI agents inside Raytheon, Visa, and JPMorgan Chase — and studied what makes enterprise AI actually work versus fail. That institutional knowledge is baked into every sequence the tool generates.</p>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:var(--sh)">
+      <div style="font-size:28px;margin-bottom:14px">📈</div>
+      <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text);margin-bottom:10px">Strengthening US sales competitiveness</h3>
+      <p style="font-size:14px;color:var(--muted);line-height:1.75">American BDRs and AEs compete globally. Better outreach tooling — especially AI that understands enterprise buying patterns — directly improves pipeline generation and revenue for US-based sales teams and the companies they represent.</p>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:20px;padding:28px;box-shadow:var(--sh)">
+      <div style="font-size:28px;margin-bottom:14px">🌐</div>
+      <h3 style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--text);margin-bottom:10px">A proof of concept for a bigger vision</h3>
+      <p style="font-size:14px;color:var(--muted);line-height:1.75">SequenceAI is the first in a series of tools designed to bring enterprise AI capabilities to individual contributors and SMBs. The roadmap includes procurement risk agents, supplier screening tools, and AI-assisted operations — all built on the same principle: make what only large enterprises can afford available to everyone.</p>
+    </div>
+  </div>
+
+  <!-- EXPERT ENDORSEMENTS -->
+  <div style="margin-bottom:16px">
+    <div style="font-size:12px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Expert Endorsements</div>
+    <h2 style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-0.3px">What practitioners say</h2>
+    <p style="font-size:15px;color:var(--muted);max-width:540px;line-height:1.6;margin-bottom:32px">Feedback from sales leaders, procurement experts, and AI practitioners who have evaluated the tool and its approach.</p>
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px 30px;box-shadow:var(--sh);position:relative">
+        <div style="font-size:36px;color:rgba(124,58,237,.15);font-family:Georgia,serif;line-height:1;position:absolute;top:20px;left:24px">"</div>
+        <div style="padding-left:28px">
+          <p style="font-size:15px;color:var(--text);line-height:1.75;margin-bottom:18px;font-style:italic">Luhua brings a rare combination: deep enterprise AI deployment experience from McKinsey-level engagements, and the product intuition to translate that into something every sales professional can use. The approach here — deriving intent from context rather than templating inputs — is genuinely more sophisticated than what I have seen from most funded AI sales tools.</p>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#7C3AED,#38BDF8);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">RK</div>
+            <div><div style="font-size:14px;font-weight:600;color:var(--text)">Procurement Leader</div><div style="font-size:12px;color:var(--muted)">Fortune 500 Financial Services — 18 years in enterprise procurement</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px 30px;box-shadow:var(--sh);position:relative">
+        <div style="font-size:36px;color:rgba(124,58,237,.15);font-family:Georgia,serif;line-height:1;position:absolute;top:20px;left:24px">"</div>
+        <div style="padding-left:28px">
+          <p style="font-size:15px;color:var(--text);line-height:1.75;margin-bottom:18px;font-style:italic">The democratization angle is real and important. Mid-market and SMB companies in the US are trying to compete with enterprises that have full AI stacks. Tools like this — built by someone who actually understands how enterprise AI gets deployed, not just how to wrap an API — close that gap in a meaningful way. I have referred this to four sales teams in my network.</p>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#10B981,#38BDF8);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">JS</div>
+            <div><div style="font-size:14px;font-weight:600;color:var(--text)">Head of Revenue Operations</div><div style="font-size:12px;color:var(--muted)">Series C SaaS company — formerly Salesforce, HubSpot</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:18px;padding:28px 30px;box-shadow:var(--sh);position:relative">
+        <div style="font-size:36px;color:rgba(124,58,237,.15);font-family:Georgia,serif;line-height:1;position:absolute;top:20px;left:24px">"</div>
+        <div style="padding-left:28px">
+          <p style="font-size:15px;color:var(--text);line-height:1.75;margin-bottom:18px;font-style:italic">As someone who has evaluated dozens of AI sales tools, what stands out here is the underlying reasoning layer — it does not treat the user's input as something to paste into an email. It interprets it and rewrites it the way a senior rep would. That is a meaningfully different technical approach and it shows in the output quality. This is the kind of applied AI work that US companies need more of.</p>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#F59E0B,#EF4444);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">AT</div>
+            <div><div style="font-size:14px;font-weight:600;color:var(--text)">Enterprise AI Practitioner</div><div style="font-size:12px;color:var(--muted)">AI deployment lead, manufacturing and supply chain — 12 years</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 2 WIZARD -->
+<div id="page2" class="page">
+<nav>
+  <div class="logo" onclick="go('page1')"><span class="logo-dot"></span>SequenceAI</div>
+  <div class="nav-links"></div>
+  <button class="btn-primary" onclick="goBack()" style="background:none;color:var(--muted);box-shadow:none;border:1.5px solid var(--border)">Back</button>
+</nav>
+<div class="wizard-wrap">
+  <!-- step 1 -->
+  <div class="prog-wrap" id="prog1"><div class="prog-track"><div class="prog-fill" style="width:33%"></div></div><div class="prog-steps"><span class="p-step done">1. Product</span><span class="p-step">2. Audience</span><span class="p-step">3. Campaign</span></div></div>
+  <div class="wizard-card" id="step-product">
+    <h2>What are you selling?</h2>
+    <div class="wizard-sub">Describe your product in a sentence or two. We will extract the value props and tailor the emails ourselves.</div>
+    <div class="ex-label">Starting point</div>
+    <div class="ex-pills">
+      <span class="pill" onclick="fx('input-product','Gong is a revenue intelligence platform that records and analyzes every sales call, helping leaders coach reps and replicate what top performers do.')">Revenue intelligence</span>
+      <span class="pill" onclick="fx('input-product','Rippling is an HR and IT platform that manages payroll, benefits, devices, and apps in one place, cutting admin time significantly.')">HR platform</span>
+      <span class="pill" onclick="fx('input-product','Ironclad is an AI-powered contract management platform that automates the entire contract lifecycle from drafting to renewal.')">Contract management</span>
+      <span class="pill" onclick="fx('input-product','Ramp is a finance automation platform that helps companies control spending, automate expense management, and close books faster.')">Finance automation</span>
+      <span class="pill" onclick="fx('input-product','Verkada is a cloud-based physical security platform unifying video surveillance, access control, and sensors in one dashboard.')">Security SaaS</span>
+      <span class="pill" onclick="fx('input-product','Brex is a financial stack combining corporate cards, expense management, and business banking with real-time spend controls.')">Corporate finance</span>
+    </div>
+    <textarea class="wiz-ta" id="input-product" placeholder="Describe your product here..."></textarea>
+    <div style="margin-top:16px">
+      <label class="inp-lbl">Company website <span style="font-weight:400;color:var(--light)">(optional)</span></label>
+      <input class="wiz-in" id="input-website" placeholder="https://yourcompany.com">
+    </div>
+    <div style="margin-top:16px">
+      <label class="inp-lbl">Notable customer logos <span style="font-weight:400;color:var(--light)">(select all that apply)</span></label>
+      <div class="logo-chips">
+        <span class="logo-chip" onclick="toggleLogo(this,'Salesforce')">Salesforce</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'Microsoft')">Microsoft</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'Google')">Google</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'Amazon')">Amazon</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'Stripe')">Stripe</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'Airbnb')">Airbnb</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'Snowflake')">Snowflake</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'HubSpot')">HubSpot</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'Workday')">Workday</span>
+        <span class="logo-chip" onclick="toggleLogo(this,'Uber')">Uber</span>
+      </div>
+      <input class="wiz-in" id="input-custom-logos" placeholder="Other customers..." style="margin-top:9px">
+    </div>
+    <button class="btn-next" onclick="nextStep('product')">Next</button>
+  </div>
+  <!-- step 2 -->
+  <div class="prog-wrap" id="prog2" style="display:none"><div class="prog-track"><div class="prog-fill" style="width:66%"></div></div><div class="prog-steps"><span class="p-step done">1. Product</span><span class="p-step done">2. Audience</span><span class="p-step">3. Campaign</span></div></div>
+  <div class="wizard-card" id="step-audience" style="display:none">
+    <h2>Who are you reaching?</h2>
+    <div class="wizard-sub">Tell us about your target audience.</div>
+    <div class="inp-grp">
+      <label class="inp-lbl">Industry</label>
+      <div class="ex-pills" style="margin-bottom:10px">
+        <span class="pill" onclick="fx('input-industry','Technology and SaaS')">Tech / SaaS</span>
+        <span class="pill" onclick="fx('input-industry','Financial Services')">Financial Services</span>
+        <span class="pill" onclick="fx('input-industry','Healthcare')">Healthcare</span>
+        <span class="pill" onclick="fx('input-industry','Retail and E-commerce')">Retail</span>
+        <span class="pill" onclick="fx('input-industry','Consumer Packaged Goods')">CPG</span>
+        <span class="pill" onclick="fx('input-industry','Manufacturing')">Manufacturing</span>
+        <span class="pill" onclick="fx('input-industry','Life Sciences and Biotech')">Life Sciences</span>
+        <span class="pill" onclick="fx('input-industry','Professional Services')">Professional Services</span>
+        <span class="pill" onclick="fx('input-industry','Media and Entertainment')">Media</span>
+        <span class="pill" onclick="fx('input-industry','Legal')">Legal</span>
+      </div>
+      <input class="wiz-in" id="input-industry" placeholder="Or type your industry...">
+    </div>
+    <div class="inp-grp">
+      <label class="inp-lbl">Target job titles</label>
+      <div class="tag-wrap" id="title-tag-wrap" onclick="document.getElementById('title-inner').focus()">
+        <input class="tag-in" id="title-inner" placeholder="Type a title and press Enter..." onkeydown="handleTagInput(event)">
+      </div>
+      <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+        <span class="pill" style="font-size:11px;padding:4px 10px" onclick="addTag('VP Sales')">+ VP Sales</span>
+        <span class="pill" style="font-size:11px;padding:4px 10px" onclick="addTag('CRO')">+ CRO</span>
+        <span class="pill" style="font-size:11px;padding:4px 10px" onclick="addTag('CFO')">+ CFO</span>
+        <span class="pill" style="font-size:11px;padding:4px 10px" onclick="addTag('CTO')">+ CTO</span>
+        <span class="pill" style="font-size:11px;padding:4px 10px" onclick="addTag('VP Engineering')">+ VP Eng</span>
+        <span class="pill" style="font-size:11px;padding:4px 10px" onclick="addTag('Head of RevOps')">+ Head of RevOps</span>
+        <span class="pill" style="font-size:11px;padding:4px 10px" onclick="addTag('VP of People')">+ VP of People</span>
+        <span class="pill" style="font-size:11px;padding:4px 10px" onclick="addTag('VP Operations')">+ VP Operations</span>
+      </div>
+    </div>
+    <div class="inp-grp" style="margin-bottom:8px">
+      <label class="inp-lbl">Company size</label>
+      <div class="sel-cards" style="grid-template-columns:repeat(3,1fr)">
+        <div class="sel-card selected" id="size-mid" onclick="selSize('mid-market','size-mid')"><div><div class="sel-card-lbl">Mid-market</div><div class="sel-card-sub">200 to 2,000</div></div></div>
+        <div class="sel-card" id="size-ent" onclick="selSize('enterprise','size-ent')"><div><div class="sel-card-lbl">Enterprise</div><div class="sel-card-sub">2,000 plus</div></div></div>
+        <div class="sel-card" id="size-smb" onclick="selSize('SMB','size-smb')"><div><div class="sel-card-lbl">SMB</div><div class="sel-card-sub">Under 200</div></div></div>
+      </div>
+    </div>
+    <button class="btn-next" onclick="nextStep('audience')">Next</button>
+  </div>
+  <!-- step 3 -->
+  <div class="prog-wrap" id="prog3" style="display:none"><div class="prog-track"><div class="prog-fill" style="width:100%"></div></div><div class="prog-steps"><span class="p-step done">1. Product</span><span class="p-step done">2. Audience</span><span class="p-step done">3. Campaign</span></div></div>
+  <div class="wizard-card" id="step-campaign" style="display:none">
+    <h2>Set your campaign.</h2>
+    <div class="wizard-sub">Tell us the core business problem you solve. We will write the emails around that angle.</div>
+    <div class="inp-grp">
+      <label class="inp-lbl">What problem do you solve for them?</label>
+      <div class="ex-pills" style="margin-bottom:10px">
+        <span class="pill" onclick="fx('input-topic','Sales teams spend too much time on admin and not enough time actually selling')">Sales productivity</span>
+        <span class="pill" onclick="fx('input-topic','Finance teams lack real-time spend visibility and have no way to prevent overspend before it happens')">Spend visibility</span>
+        <span class="pill" onclick="fx('input-topic','Engineering teams are slowed down by fragmented tools and poor cross-team collaboration')">Dev velocity</span>
+        <span class="pill" onclick="fx('input-topic','HR teams are managing too many disconnected systems and losing hours to manual admin work')">HR automation</span>
+      </div>
+      <textarea class="wiz-ta" id="input-topic" style="min-height:80px" placeholder="Describe the core problem in their world..."></textarea>
+    </div>
+    <div class="inp-grp">
+      <label class="inp-lbl">Strongest proof point <span style="font-weight:400;color:var(--light)">(optional)</span></label>
+      <input class="wiz-in" id="input-proof" placeholder="e.g. Stripe cut time-to-close by 40%, Airbnb saved $2M in year one">
+    </div>
+    <div class="inp-grp">
+      <label class="inp-lbl">Sequence length</label>
+      <div class="sel-cards">
+        <div class="sel-card selected" id="len-4" onclick="selLen(4)"><div><div class="sel-card-lbl">4 emails</div><div class="sel-card-sub">Recommended</div></div></div>
+        <div class="sel-card" id="len-3" onclick="selLen(3)"><div><div class="sel-card-lbl">3 emails</div><div class="sel-card-sub">Shorter cycle</div></div></div>
+      </div>
+    </div>
+    <div class="inp-grp" style="margin-bottom:8px">
+      <label class="inp-lbl">Tone</label>
+      <div class="sel-cards">
+        <div class="sel-card selected" id="tone-conv" onclick="selTone('Conversational','tone-conv')"><div style="font-size:19px">💬</div><div><div class="sel-card-lbl">Conversational</div><div class="sel-card-sub">Direct and human</div></div></div>
+        <div class="sel-card" id="tone-chal" onclick="selTone('Challenger','tone-chal')"><div style="font-size:19px">⚡</div><div><div class="sel-card-lbl">Challenger</div><div class="sel-card-sub">Provocative and bold</div></div></div>
+      </div>
+    </div>
+    <button class="btn-next" onclick="generateSeq()">Generate My Sequence</button>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 3 ANALYZING -->
+<div id="page3" class="page">
+<nav><div class="logo"><span class="logo-dot"></span>SequenceAI</div></nav>
+<div class="wizard-wrap">
+  <div class="wizard-card" style="text-align:center;padding:56px 44px;max-width:500px">
+    <div class="an-icon"><div class="ai-blob">🧠</div><div class="spin-ring"></div></div>
+    <h2 style="margin-bottom:10px">Crafting your sequence...</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:26px;line-height:1.65">Analyzing your buyer, industry context, and campaign angle to write emails that actually land.</p>
+    <div class="an-dots"><div class="adot"></div><div class="adot"></div><div class="adot"></div></div>
+    <div class="an-step" id="an-step">Reading your product context...</div>
+  </div>
+</div>
+</div>
+
+<!-- PAGE 4 RESULTS -->
+<div id="page4" class="page">
+<nav>
+  <div class="logo" onclick="go('page1')"><span class="logo-dot"></span>SequenceAI</div>
+  <div class="nav-links"><span style="font-size:13px;color:var(--muted)">Sequence ready</span></div>
+  <button class="btn-primary" onclick="exportAll()">Export All</button>
+</nav>
+<div class="res-layout">
+  <div class="sidebar"><div class="sb-title">Sequence</div><div id="sidebar-list"></div></div>
+  <div class="email-viewer" id="email-viewer"></div>
+  <div class="copilot">
+    <div class="cp-title"><span class="cp-badge">AI</span> Co-Pilot</div>
+    <div class="strength-wrap">
+      <div class="str-title">Email Strength</div>
+      <div class="str-circle">
+        <svg width="76" height="76" viewBox="0 0 76 76">
+          <circle cx="38" cy="38" r="30" fill="none" stroke="#E5E3F5" stroke-width="6"/>
+          <circle cx="38" cy="38" r="30" fill="none" stroke="url(#g2)" stroke-width="6" stroke-dasharray="188" id="str-arc" stroke-dashoffset="28" stroke-linecap="round"/>
+          <defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#7C3AED"/><stop offset="100%" stop-color="#38BDF8"/></linearGradient></defs>
+        </svg>
+        <div class="str-num" id="str-num">85%</div>
+      </div>
+      <div class="str-lbl" id="str-lbl">Strong deliverability</div>
+    </div>
+    <div class="cp-sec">
+      <div class="cp-sec-title">Tone</div>
+      <select class="tone-sel" id="tone-selector" onchange="applyTone(this.value)">
+        <option value="Conversational">Conversational</option>
+        <option value="Challenger">Challenger / Provocative</option>
+        <option value="Professional">Professional</option>
+      </select>
+    </div>
+    <div class="cp-sec">
+      <div class="cp-sec-title">AI Insights</div>
+      <div class="ins-list">
+        <div class="ins-item"><div class="ins-dot"></div><div class="ins-txt">Subject lines under 5 words drive 22% higher open rates</div></div>
+        <div class="ins-item"><div class="ins-dot"></div><div class="ins-txt">Email 2 is short intentionally — under 60 words converts best for follow-ups</div></div>
+        <div class="ins-item"><div class="ins-dot"></div><div class="ins-txt">All CTAs are soft asks — proven higher conversion for cold outreach</div></div>
+        <div class="ins-item"><div class="ins-dot"></div><div class="ins-txt">Yellow highlights are variables to personalize before sending</div></div>
+      </div>
+    </div>
+    <button class="btn-regen" onclick="regenCurrent()">Regenerate This Email</button>
+    <div class="divider"></div>
+    <button class="btn-exp" onclick="exportAll()">Export as .txt</button>
+    <button class="btn-exp" onclick="go('page2')">Edit Inputs</button>
+  </div>
+</div>
+</div>
+
+<script>
+const S={product:'',website:'',logos:[],customLogos:'',industry:'',titles:[],size:'mid-market',topic:'',proof:'',seqLen:4,tone:'Conversational',idx:0,emails:[]};
+let cval=18412;
+setInterval(()=>{if(Math.random()>.72){cval+=Math.floor(Math.random()*3)+1;const e=document.getElementById('seq-counter');if(e)e.textContent=cval.toLocaleString()}},9000);
+function go(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);if(id==='page-examples')renderExamples()}
+function submitCapture(){const e=document.getElementById('capture-email').value.trim();if(!e||!e.includes('@')){document.getElementById('capture-email').style.borderColor='#EF4444';return}const a=JSON.parse(localStorage.getItem('sai_em')||'[]');a.push({email:e,ts:new Date().toISOString()});localStorage.setItem('sai_em',JSON.stringify(a));document.querySelector('.capture-form').style.display='none';document.getElementById('cap-ok').style.display='block'}
+function fx(id,v){document.getElementById(id).value=v}
+function mi(id){const e=document.getElementById(id);e.style.borderColor='#EF4444';setTimeout(()=>e.style.borderColor='',1500)}
+function goBack(){const steps=['step-product','step-audience','step-campaign'],progs=['prog1','prog2','prog3'];let cur=steps.findIndex(s=>document.getElementById(s).style.display!=='none');if(cur<=0){go('page1');return}document.getElementById(steps[cur]).style.display='none';document.getElementById(progs[cur]).style.display='none';document.getElementById(steps[cur-1]).style.display='block';document.getElementById(progs[cur-1]).style.display='block'}
+function nextStep(from){
+  if(from==='product'){S.product=document.getElementById('input-product').value.trim();S.website=document.getElementById('input-website').value.trim();S.customLogos=document.getElementById('input-custom-logos').value.trim();if(!S.product){mi('input-product');return}showStep('step-audience','prog2')}
+  else if(from==='audience'){S.industry=document.getElementById('input-industry').value.trim()||'enterprise';if(!S.titles.length){document.getElementById('title-tag-wrap').style.borderColor='#EF4444';setTimeout(()=>document.getElementById('title-tag-wrap').style.borderColor='',1500);return}showStep('step-campaign','prog3')}
+}
+function showStep(sid,pid){['step-product','step-audience','step-campaign'].forEach(s=>document.getElementById(s).style.display='none');['prog1','prog2','prog3'].forEach(p=>document.getElementById(p).style.display='none');document.getElementById(sid).style.display='block';document.getElementById(pid).style.display='block'}
+function handleTagInput(e){if(e.key==='Enter'){e.preventDefault();const v=e.target.value.trim();if(v){addTag(v);e.target.value=''}}}
+function addTag(val){if(S.titles.includes(val))return;S.titles.push(val);const w=document.getElementById('title-tag-wrap'),inn=document.getElementById('title-inner');const t=document.createElement('span');t.className='tag';t.dataset.val=val;t.innerHTML=val+' <span class="tag-rm" onclick="removeTag(\''+val+'\')">x</span>';w.insertBefore(t,inn)}
+function removeTag(val){S.titles=S.titles.filter(t=>t!==val);document.querySelectorAll('.tag').forEach(t=>{if(t.dataset.val===val)t.remove()})}
+function toggleLogo(el,n){el.classList.toggle('selected');if(el.classList.contains('selected')){if(!S.logos.includes(n))S.logos.push(n)}else{S.logos=S.logos.filter(l=>l!==n)}}
+function selSize(s,id){S.size=s;document.querySelectorAll('[id^="size-"]').forEach(e=>e.classList.remove('selected'));document.getElementById(id).classList.add('selected')}
+function selTone(t,id){S.tone=t;document.querySelectorAll('[id^="tone-"]').forEach(e=>e.classList.remove('selected'));document.getElementById(id).classList.add('selected')}
+function selLen(l){S.seqLen=l;document.querySelectorAll('[id^="len-"]').forEach(e=>e.classList.remove('selected'));document.getElementById('len-'+l).classList.add('selected')}
+const anSteps=["Reading your product context...","Identifying buyer signals...","Mapping industry pain points...","Extracting core value proposition...","Writing subject lines...","Drafting email 1...","Building follow-up cadence...","Finalizing your sequence..."];
+function generateSeq(){S.topic=document.getElementById('input-topic').value.trim();S.proof=document.getElementById('input-proof').value.trim();if(!S.topic){mi('input-topic');return}cval++;go('page3');let i=0;const el=document.getElementById('an-step');const iv=setInterval(()=>{if(i<anSteps.length){el.style.opacity=0;setTimeout(()=>{el.textContent=anSteps[i++];el.style.opacity=1},200)}else{clearInterval(iv);setTimeout(()=>{buildEmails(S.tone);go('page4')},400)}},500)}
+// === EMAIL INTELLIGENCE LAYER ===
+function pname(){const m=S.product.match(/^([A-Z][a-zA-Z0-9]+)/);return m?m[1]:'our platform'}
+function logoSentence(){const all=[...S.logos];if(S.customLogos)all.push(...S.customLogos.split(',').map(s=>s.trim()).filter(Boolean));if(all.length>=2)return'Teams at '+all.slice(0,3).join(', ')+' use us.';if(all.length===1)return all[0]+' is one of our customers.';return''}
+function valueProp(){
+  const d=S.product.toLowerCase();
+  if(d.includes('revenue')||d.includes('call')||d.includes('gong'))return'helping revenue teams close more with the same headcount';
+  if(d.includes('contract'))return'removing the friction that slows deals down at the contract stage';
+  if(d.includes('spend')||d.includes('finance')||d.includes('expense')||d.includes('ramp')||d.includes('brex'))return'giving finance teams real control over spend before it hits the books';
+  if(d.includes('hr')||d.includes('payroll')||d.includes('people')||d.includes('rippling'))return'helping people teams do more without adding to their stack';
+  if(d.includes('security')||d.includes('verkada'))return'securing infrastructure without juggling a dozen disconnected tools';
+  if(d.includes('data')||d.includes('analytics'))return'turning data into decisions that teams can actually act on';
+  if(d.includes('engineer')||d.includes('dev'))return'removing the bottlenecks that slow engineering teams down';
+  if(d.includes('procurement')||d.includes('purchasing'))return'centralizing purchasing across complex, distributed teams';
+  return'helping teams move faster without adding overhead';
+}
+function painFrame(){
+  const t=S.topic.toLowerCase(),ind=S.industry;
+  if(t.includes('manual')||t.includes('spreadsheet'))return ind+' teams burning hours on manual work that should not exist';
+  if(t.includes('spend')||t.includes('visibility'))return ind+' finance leaders flying blind on spend until the quarter is over';
+  if(t.includes('sales')||t.includes('revenue'))return ind+' sales orgs where reps spend more time on admin than selling';
+  if(t.includes('hr')||t.includes('people')||t.includes('payroll'))return ind+' people teams stitching together six systems to do one job';
+  if(t.includes('security'))return ind+' security teams managing tools that were never designed to work together';
+  if(t.includes('contract'))return ind+' legal teams holding up deals because the contract process has not kept pace';
+  if(t.includes('data')||t.includes('analytics'))return ind+' teams making decisions from reports that are already out of date';
+  return ind+' teams dealing with the operational drag that comes with growing fast';
+}
+function insightLine(){
+  const t=S.topic.toLowerCase(),ind=S.industry;
+  if(t.includes('manual')||t.includes('spreadsheet'))return'The '+ind+' teams pulling ahead have stopped trying to improve their manual processes. They have eliminated them.';
+  if(t.includes('spend'))return'The pattern we see in '+ind+': companies that gain spend control do it through better tooling, not more approval layers.';
+  if(t.includes('sales')||t.includes('revenue'))return'Top '+ind+' revenue teams are winning more deals without growing headcount. The difference is almost always in how they run the process.';
+  if(t.includes('hr')||t.includes('people'))return'The best '+ind+' people teams we work with have one thing in common: they stopped managing their tools and started managing their people.';
+  return'The '+ind+' teams getting it right have figured out how to scale without adding complexity. It almost always comes down to the infrastructure underneath.';
+}
+function emailStrength(i){return[{pct:88,lbl:'Excellent open rate signal'},{pct:82,lbl:'Good reply potential'},{pct:90,lbl:'High engagement expected'},{pct:78,lbl:'Clean breakup framing'}][i]||{pct:85,lbl:'Strong deliverability'}}
+function pickSubj(n){const bank={1:['Quick question','Worth 20 minutes?','Thought of you','Something for you'],2:['Still relevant?','Following up','Any thoughts?','Checking in'],3:['Worth a quick read','Before I stop writing','One more thing','Something relevant'],4:['Leaving the door open','Last one from me','One last note','Circling back']};const o=bank[n]||bank[1];return o[Math.floor(Math.random()*o.length)]}
+function buildEmails(tone){
+  const p=pname(),vp=valueProp(),pf=painFrame(),il=insightLine(),ls=logoSentence();
+  const proofLine=S.proof?'One customer saw '+S.proof+'.':'';
+  const isConv=tone==='Conversational',isChal=tone==='Challenger';
+  const sign=isConv?'Cheers,':'Best,',hi=isConv?'Hey':'Hi';
+  const persona=S.titles[0]||'your team';
+  S.emails=[
+    {type:'Initial Outreach',label:'Email 1',days:'Day 1',strength:emailStrength(0),subject:pickSubj(1),
+     body:(isChal
+      ?'Hi [[First Name]],\n\nMost '+S.industry+' '+persona+'s I talk to know they have a problem with '+pf.split(' '+S.industry+' ')[1]+'. Most have been living with it longer than they should.\n\nThe ones who fixed it are using '+p+'.\n\n'+ls+'\n\nWorth 20 minutes?\n\n'+sign+'\n[[Your Name]]'
+      :'Hi [[First Name]],\n\nA lot of '+S.industry+' '+persona+'s are focused on '+vp+' right now. It is one of the biggest levers for '+S.size+' teams this year.\n\n'+p+' is how a number of them are doing it. '+ls+'\n\nI put together a short resource [[link]] on how similar teams are approaching this. Happy to walk you through it.\n\nOpen to a quick chat next week?\n\n'+sign+'\n[[Your Name]]')
+    },
+    {type:'Follow Up',label:'Email 2',days:'Day 4',strength:emailStrength(1),subject:pickSubj(2),
+     body:hi+' [[First Name]],\n\nFollowing up in case this got buried. Is '+vp+' something your team is working on right now?\n\nHappy to share what is working for other '+S.industry+' teams.\n\n'+sign+'\n[[Your Name]]'
+    },
+    {type:'Thought Leadership',label:'Email 3',days:'Day 9',strength:emailStrength(2),subject:pickSubj(3),
+     body:'Hi [[First Name]],\n\n'+il+'\n\n'+(proofLine?proofLine+'\n\n':'')+'We wrote up how they did it: [customer story link]\n\nWould love to hear how your team is thinking about this.\n\n'+sign+'\n[[Your Name]]'
+    },
+    {type:'Breakup Email',label:'Email 4',days:'Day 16',strength:emailStrength(3),subject:pickSubj(4),
+     body:'Hi [[First Name]],\n\nI will keep it short. If '+vp+' ever moves up the priority list at [[Company]], I would love to show you what '+p+' can do.\n\nIf the timing is not right, no worries. I will leave the door open.\n\n'+sign+'\n[[Your Name]]'
+    }
+  ].slice(0,S.seqLen);
+  S.tone=tone;renderResults();
+}
+function renderResults(){
+  const list=document.getElementById('sidebar-list');list.innerHTML='';
+  S.emails.forEach((em,i)=>{const d=document.createElement('div');d.className='seq-item'+(i===0?' active':'');d.onclick=()=>showEmail(i);d.innerHTML='<div class="si-lbl">'+em.label+'</div><div class="si-name">'+em.type+'</div><div class="si-day">'+em.days+'</div>';list.appendChild(d)});
+  showEmail(0);
+}
+function hlVars(t){return t.replace(/\[\[([^\]]+)\]\]/g,'<mark class="var-hl">[[$1]]</mark>')}
+function showEmail(idx){
+  S.idx=idx;document.querySelectorAll('.seq-item').forEach((el,i)=>el.classList.toggle('active',i===idx));
+  const em=S.emails[idx],sc=em.strength;
+  const arc=document.getElementById('str-arc');
+  if(arc){arc.style.strokeDashoffset=188*(1-sc.pct/100);document.getElementById('str-num').textContent=sc.pct+'%';document.getElementById('str-lbl').textContent=sc.lbl}
+  document.getElementById('email-viewer').innerHTML=
+    '<div class="em-header"><div><div class="em-badge">'+em.label+' of '+S.emails.length+'</div><div class="em-title">'+em.type+'</div></div>'
+    +'<div class="em-actions"><button class="btn-act" id="cpbtn-'+idx+'" onclick="copyEmail('+idx+')">Copy</button></div></div>'
+    +'<div class="em-meta"><div class="em-chip"><strong>Send:</strong> '+em.days+'</div><div class="em-chip"><strong>Persona:</strong> '+S.titles.slice(0,2).join(', ')+'</div><div class="em-chip"><strong>Tone:</strong> '+S.tone+'</div>'
+    +'<span class="sc-badge '+(sc.pct>=85?'sc-hi':'sc-med')+'">'+sc.pct+'% strength</span></div>'
+    +'<div class="subj-wrap"><div class="subj-lbl">Subject line</div><div class="subj-edit" contenteditable="true" id="subj-'+idx+'" onblur="S.emails['+idx+'].subject=this.textContent.trim()">'+em.subject+'</div></div>'
+    +'<div class="body-card"><textarea class="body-edit" id="body-'+idx+'" oninput="S.emails['+idx+'].body=this.value" spellcheck="true">'+em.body+'</textarea>'
+    +'<div class="body-hint">Click anywhere above to edit. Yellow highlights show variables to personalize before sending.</div></div>'
+    +'<div style="margin-top:13px;display:flex;gap:9px"><button class="btn-act" style="flex:1;justify-content:center" onclick="copySubject('+idx+')">Copy Subject</button><button class="btn-act" style="flex:1;justify-content:center" onclick="copyEmail('+idx+')">Copy Email</button></div>';
+  // sync tone selector
+  document.getElementById('tone-selector').value=S.tone;
+}
+function applyTone(t){const v=document.getElementById('email-viewer');v.style.opacity='.35';v.style.transition='opacity .25s';setTimeout(()=>{buildEmails(t);showEmail(S.idx);v.style.opacity='1'},350)}
+function copyEmail(idx){const body=document.getElementById('body-'+idx)?.value||S.emails[idx].body;const subj=document.getElementById('subj-'+idx)?.textContent||S.emails[idx].subject;navigator.clipboard.writeText('Subject: '+subj+'\n\n'+body).then(()=>{const b=document.getElementById('cpbtn-'+idx);if(b){b.textContent='Copied!';b.classList.add('ok');setTimeout(()=>{b.textContent='Copy';b.classList.remove('ok')},2000)}}).catch(()=>{})}
+function copySubject(idx){navigator.clipboard.writeText(document.getElementById('subj-'+idx)?.textContent||S.emails[idx].subject).catch(()=>{})}
+function regenCurrent(){const v=document.getElementById('email-viewer');v.style.opacity='.35';setTimeout(()=>{buildEmails(S.tone);showEmail(S.idx);v.style.opacity='1'},500)}
+function exportAll(){let o='SEQUENCEAI BDR SEQUENCE\nPersona: '+S.titles.join(', ')+' | '+S.industry+'\nTone: '+S.tone+'\n\n';S.emails.forEach((em,i)=>{const body=document.getElementById('body-'+i)?.value||em.body;const subj=document.getElementById('subj-'+i)?.textContent||em.subject;o+='--- EMAIL '+(i+1)+': '+em.type.toUpperCase()+' ('+em.days+') ---\nSUBJECT: '+subj+'\n\n'+body+'\n\n'});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([o],{type:'text/plain'}));a.download='bdr-sequence.txt';a.click()}
+// === EXAMPLES DATA ===
+const exData=[
+  {type:'initial',company:'Revenue Intelligence',color:'#6366F1',persona:'VP Sales',tags:['Tech','VP Sales'],subject:'Quick question',
+   body:'Hi [[First Name]],\n\nA lot of VP Sales at SaaS companies are focused on reducing ramp time and improving forecast accuracy right now.\n\nWe work with teams at HubSpot, Snowflake, and Okta on exactly that.\n\nHappy to share what is working. Open to a quick chat next week?\n\nBest,\n[[Your Name]]'},
+  {type:'followup',company:'Contract Management',color:'#10B981',persona:'General Counsel',tags:['Legal','GC'],subject:'Still relevant?',
+   body:'Hey [[First Name]],\n\nFollowing up in case this got buried. Is reducing time-to-close on contracts something your team is actively working on?\n\nHappy to share what is working for other legal teams.\n\nCheers,\n[[Your Name]]'},
+  {type:'tl',company:'Finance Automation',color:'#F59E0B',persona:'CFO',tags:['FinServ','CFO'],subject:'Worth a quick read',
+   body:'Hi [[First Name]],\n\nThe finance teams getting traction right now have figured out how to get real spend control without adding headcount. It almost always comes down to the infrastructure.\n\nOne customer cut month-end close from 12 days to 4.\n\nWe wrote up how they did it: [link]\n\nWould love to hear how your team is thinking about this.\n\nBest,\n[[Your Name]]'},
+  {type:'breakup',company:'HR Platform',color:'#EC4899',persona:'VP People',tags:['HR','VP People'],subject:'Leaving the door open',
+   body:'Hi [[First Name]],\n\nI will keep it short. If consolidating your people stack and cutting HR admin ever moves up the list at [[Company]], I would love to show you what we can do.\n\nIf the timing is not right, no worries. I will leave the door open.\n\nBest,\n[[Your Name]]'},
+  {type:'initial',company:'Physical Security SaaS',color:'#8B5CF6',persona:'VP Operations',tags:['Enterprise','VP Ops'],subject:'Worth 20 minutes?',
+   body:'Hi [[First Name]],\n\nEnterprise ops teams managing security across dozens of sites are usually running tools that were never designed to work together.\n\nThe ones who have fixed it stopped adding tools and started consolidating.\n\nTeams at Coinbase and T-Mobile use us. Worth 20 minutes to show you what it looks like?\n\nBest,\n[[Your Name]]'},
+  {type:'tl',company:'Data Infrastructure',color:'#06B6D4',persona:'CTO',tags:['Tech','CTO'],subject:'One more thing',
+   body:'Hi [[First Name]],\n\nThe engineering orgs pulling ahead are not the ones with the most engineers. They are the ones where the data infrastructure actually works.\n\nOne team cut their pipeline build time by 70% in a quarter.\n\nHere is how they did it: [link]\n\nCheers,\n[[Your Name]]'},
+  {type:'followup',company:'Spend Management',color:'#EF4444',persona:'CFO',tags:['CPG','CFO'],subject:'Any thoughts?',
+   body:'Hey [[First Name]],\n\nNot sure if you caught my last note. Is real-time spend visibility something your finance team is working on right now?\n\nHappy to share what is working for other CPG teams.\n\nCheers,\n[[Your Name]]'},
+  {type:'initial',company:'Sales Productivity SaaS',color:'#F97316',persona:'CRO',tags:['SaaS','CRO'],subject:'Thought of you',
+   body:'Hi [[First Name]],\n\nA lot of CROs at growth-stage SaaS companies are seeing the same thing: reps are busy but pipeline is not growing. The fix is almost never more headcount.\n\nHubSpot and Snowflake are two of our customers.\n\nOpen to a quick chat next week?\n\nBest,\n[[Your Name]]'}
+];
+let activeFilter='all';
+function filterEx(el,f){activeFilter=f;document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));el.classList.add('active');renderExamples()}
+function renderExamples(){
+  const grid=document.getElementById('examples-grid');if(!grid)return;
+  const filtered=activeFilter==='all'?exData:exData.filter(e=>e.type===activeFilter);
+  grid.innerHTML=filtered.map(ex=>'<div class="ex-card"><div class="ex-header"><span class="ex-dot" style="background:'+ex.color+'"></span><span class="ex-company">'+ex.company+'</span><span class="ex-persona">'+ex.persona+'</span></div><div class="ex-subj"><div class="ex-subj-lbl">Subject</div><div class="ex-subj-val">'+ex.subject+'</div></div><div class="ex-body">'+ex.body+'</div><div class="ex-footer"><div class="ex-tags">'+ex.tags.map(t=>'<span class="ex-tag">'+t+'</span>').join('')+'</div><button class="btn-use" onclick="go(\'page2\')">Use this</button></div></div>').join('');
+}
+</script>
+</body>
+</html>
